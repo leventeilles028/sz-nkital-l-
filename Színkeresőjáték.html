@@ -1,0 +1,291 @@
+﻿<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Színkitaláló</title>
+    <style>
+        :root {
+            --primary-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-primary: #333;
+            --text-secondary: #666;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            margin: 0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+
+        .subtitle {
+            color: #ccc;
+            margin-top: 0.5rem;
+        }
+
+        #foszín {
+            width: 220px;
+            height: 220px;
+            border-radius: 18px;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+            #foszín::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                box-shadow: inset 0 0 12px rgba(0,0,0,0.1);
+            }
+
+        .arnyalat-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .arnyalat-gomb {
+            width: 100%;
+            height: 100px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--card-bg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+            .arnyalat-gomb::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 80%;
+                height: 80%;
+                transform: translate(-50%, -50%);
+                border-radius: 8px;
+            }
+
+            .arnyalat-gomb:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            }
+
+        #eredmeny {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #pontok {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-size: 1.25rem;
+            background: var(--card-bg);
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .difficulty-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            .arnyalat-container {
+                grid-template-columns: 1fr;
+            }
+
+            #foszín {
+                width: 180px;
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="pontok">
+        <span>Pontok:</span>
+        <span id="pontSzamlalo">0</span>
+    </div>
+
+    <div class="header">    
+        <p class="subtitle">Válaszd ki a főszínhez tartozó árnyalatot.</p>
+    </div>
+
+    <div id="foszín"></div>
+    <div class="arnyalat-container" id="arnyalatok"></div>
+    <div id="eredmeny"></div>
+
+    <script>
+        const szinek = [
+            {
+                fő: "#3A86FF",
+                árnyalatok: ["#2B6CDB", "#4A9AFF", "#6EB0FF", "#92C6FF", "#B6DCFF", "#D4EDFF"]
+            },
+            {
+                fő: "#FF006E",
+                árnyalatok: ["#D1005C", "#FF1A7D", "#FF4793", "#FF75AB", "#FFA3C3", "#FFD1E0"]
+            },
+            {
+                fő: "#8338EC",
+                árnyalatok: ["#6B2FC6", "#9552EF", "#AC75F2", "#C398F5", "#DABBFF", "#F1DEFF"]
+            },
+            {
+                fő: "#FB5607",
+                árnyalatok: ["#D34606", "#FF6724", "#FF844D", "#FFA176", "#FFBE9F", "#FFDBC8"]
+            },
+            {
+                fő: "#008000",
+                árnyalatok: ["#006400", "#009900", "#00B300", "#66CC66", "#99D699", "#CCEACC"]
+            },
+            {
+                fő: "#FFBE0B",
+                árnyalatok: ["#D69E09", "#FFC82E", "#FFD45A", "#FFDF86", "#FFEBB3", "#FFF5D9"]
+            }
+        ];
+
+        let helyesValasz;
+        let pontok = 0;
+        let játékAktív = true;
+
+        function generálóvéletlenárnyalat(színcsoport) {
+            const árnyalatok = [...színcsoport.árnyalatok];
+            const véletlenIndex = Math.floor(Math.random() * (árnyalatok.length - 3));
+            return árnyalatok.slice(véletlenIndex, véletlenIndex + 4);
+        }
+
+        function randomSzín() {
+            const véletlenSzín = szinek[Math.floor(Math.random() * szinek.length)];
+            const főElem = document.getElementById("foszín");
+            főElem.style.backgroundColor = véletlenSzín.fő;
+
+            const helyesÁrnyalatok = generálóvéletlenárnyalat(véletlenSzín);
+            helyesValasz = helyesÁrnyalatok[Math.floor(Math.random() * helyesÁrnyalatok.length)];
+
+            const összesÁrnyalat = [helyesValasz];
+
+            // Nehézségi szint: hasonló árnyalatok más színekből
+            while (összesÁrnyalat.length < 4) {
+                const másikSzín = szinek[Math.floor(Math.random() * szinek.length)];
+                if (másikSzín !== véletlenSzín) {
+                    const hasonlóÁrnyalat = generálóvéletlenárnyalat(másikSzín);
+                    const véletlenÁrnyalat = hasonlóÁrnyalat[Math.floor(Math.random() * hasonlóÁrnyalat.length)];
+                    if (!összesÁrnyalat.includes(véletlenÁrnyalat)) {
+                        összesÁrnyalat.push(véletlenÁrnyalat);
+                    }
+                }
+            }
+
+            // Keverés és gombok generálása
+            összesÁrnyalat.sort(() => Math.random() - 0.5);
+            const container = document.getElementById("arnyalatok");
+            container.innerHTML = '';
+
+            összesÁrnyalat.forEach(árnyalat => {
+                const gomb = document.createElement('button');
+                gomb.className = 'arnyalat-gomb';
+                gomb.innerHTML = `
+                        <div style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            width: 80%;
+                            height: 80%;
+                            border-radius: 8px;
+                            background: ${árnyalat};
+                            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+                        "></div>
+                    `;
+                gomb.addEventListener('click', () => ellenőrzés(árnyalat));
+                container.appendChild(gomb);
+            });
+        }
+
+        function ellenőrzés(kiválasztott) {
+            if (!játékAktív) return;
+            játékAktív = false;
+
+            const gombok = document.querySelectorAll('.arnyalat-gomb');
+            const eredményElem = document.getElementById("eredmeny");
+
+            gombok.forEach(gomb => {
+                const árnyalat = gomb.querySelector('div').style.background;
+                if (árnyalat === helyesValasz) {
+                    gomb.style.transform = 'scale(1.05)';
+                    gomb.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
+                }
+            });
+
+            if (kiválasztott === helyesValasz) {
+                pontok++;
+                eredményElem.textContent = "✓ Helyes! +1 Pont";
+                eredményElem.style.color = "#4CAF50";
+            } else {
+                eredményElem.textContent = "✗ Hibás! Próbáld újra!";
+                eredményElem.style.color = "#FF5252";
+            }
+
+            document.getElementById("pontSzamlalo").textContent = pontok;
+            eredményElem.style.opacity = '1';
+
+            setTimeout(() => {
+                játékAktív = true;
+                eredményElem.style.opacity = '0';
+                randomSzín();
+            }, 1500);
+        }
+
+        // Inicializálás
+        randomSzín();
+        document.getElementById("foszín").addEventListener('click', () => {
+            document.getElementById("foszín").style.transform = 'rotate(5deg)';
+            setTimeout(() => {
+                document.getElementById("foszín").style.transform = 'rotate(0deg)';
+            }, 300);
+        });
+    </script>
+</body>
+</html>
