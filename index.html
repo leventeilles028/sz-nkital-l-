@@ -206,7 +206,6 @@
 
             const összesÁrnyalat = [helyesValasz];
 
-            // Nehézségi szint: hasonló árnyalatok más színekből
             while (összesÁrnyalat.length < 4) {
                 const másikSzín = szinek[Math.floor(Math.random() * szinek.length)];
                 if (másikSzín !== véletlenSzín) {
@@ -218,7 +217,6 @@
                 }
             }
 
-            // Keverés és gombok generálása
             összesÁrnyalat.sort(() => Math.random() - 0.5);
             const container = document.getElementById("arnyalatok");
             container.innerHTML = '';
@@ -278,7 +276,6 @@
             }, 1500);
         }
 
-        // Inicializálás
         randomSzín();
         document.getElementById("foszín").addEventListener('click', () => {
             document.getElementById("foszín").style.transform = 'rotate(5deg)';
